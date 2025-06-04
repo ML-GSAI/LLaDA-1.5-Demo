@@ -57,6 +57,29 @@
         <script src="static/js/index.js"></script>
 
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <style>
+            .method-section {
+                background-color: #f5f5f5;
+                padding: 30px;
+                margin: 30px 0;
+                border-radius: 10px;
+            }
+            .highlight-box {
+                background-color: #e3f2fd;
+                padding: 20px;
+                border-left: 4px solid #2196f3;
+                margin: 20px 0;
+                border-radius: 5px;
+            }
+            .equation-box {
+                background-color: white;
+                padding: 15px;
+                margin: 15px 0;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                overflow-x: auto;
+            }
+        </style>
     </head>
 
     <body>
@@ -180,7 +203,7 @@
                                 <div class="publication-links">
                                     <span class="link-block">
                                         <a
-                                            href="https://arxiv.org/pdf/2505.19223"
+                                            href="https://arxiv.org/abs/2505.19223"
                                             target="_blank"
                                             class="external-link button is-normal is-rounded is-dark"
                                         >
@@ -193,7 +216,7 @@
 
                                     <span class="link-block">
                                         <a
-                                            href=""
+                                            href="https://github.com/ML-GSAI/LLaDA-1.5"
                                             target="_blank"
                                             class="external-link button is-normal is-rounded is-dark"
                                         >
@@ -243,15 +266,88 @@
                         <img
                             src="static/assets/llada_dpo.svg"
                             alt="llada_dpo"
-                            style="width: 75%; max-width: 1000px;"
+                            style="width: 45%; max-width: 1000px;"
                         />
                     </div>
-                    <div class="item" style="text-align: center">
-                        <img
-                            src="static/assets/compare.svg"
-                            alt="compare"
-                            style="width: 130%; max-width: 1000px;"
-                        />
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container is-max-desktop">
+                <!-- Motivation -->
+                <div class="method-section">
+                    <h2 class="title is-3">Motivation: The Problem with RL-based alignment in Diffusion Language Models</h2>
+                    <div class="content">
+                        <p class="is-size-5">Masked Diffusion Models (MDMs) cannot directly compute exact log-likelihoods, take DPO as an example, we must approximate log-likelihoods using Evidence Lower Bounds:</p>
+                        
+                        <div class="equation-box">
+                            \[\mathcal{L}_{\mathrm{DPO-E}}(\theta) = -\mathbb{E}_{(y_w, y_l)} \left[\log \sigma\left(\beta \left(\mathcal{B}_{\pi_\theta}(y_w) - \mathcal{B}_{\pi_{\mathrm{ref}}}(y_w)\right) - \beta\left(\mathcal{B}_{\pi_\theta}(y_l) - \mathcal{B}_{\pi_{\mathrm{ref}}}(y_l)\right)\right)\right]\]
+                        </div>
+                        
+                        <div class="highlight-box">
+                            <p><strong>Key Challenge:</strong> ELBO estimation introduces additional variance through Monte Carlo sampling, which propagates through the nonlinear log-sigmoid function, creating both <strong>bias</strong> and <strong>variance</strong> in the loss.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Method -->
+                <div class="method-section">
+                    <h2 class="title is-3">VRPO: Three Simple Techniques for Variance Reduction</h2>
+                    <div class="content">
+                        <p class="is-size-5"><strong>Core Insight:</strong> We prove that both bias and variance can be bounded by the variance of the preference score estimator. Therefore, reducing this variance improves overall optimization.</p>
+                        
+                        <div class="columns is-multiline" style="margin-top: 20px;">
+                            <div class="column is-one-third">
+                                <div class="box" style="height: 100%;">
+                                    <h4 class="title is-5">1️⃣ Increased Budget</h4>
+                                    <p>Use more samples \(n = n_{\mathrm{time}} \times n_{\mathrm{mask}}\) to estimate each ELBO</p>
+                                </div>
+                            </div>
+                            <div class="column is-one-third">
+                                <div class="box" style="height: 100%;">
+                                    <h4 class="title is-5">2️⃣ Optimal Allocation</h4>
+                                    <p>Set \(n_{\mathrm{time}} = n\) and \(n_{\mathrm{mask}} = 1\) (one mask per timestep)</p>
+                                </div>
+                            </div>
+                            <div class="column is-one-third">
+                                <div class="box" style="height: 100%;">
+                                    <h4 class="title is-5">3️⃣ Antithetic Sampling</h4>
+                                    <p>Share timesteps and masks between \(\pi_θ\) and \(\pi_{\mathrm{ref}}\)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="item" style="text-align: center">
+                            <img
+                                src="static/assets/method.png"
+                                alt="method"
+                                style="width: 100%; max-width: 1000px;"
+                            />
+                        </div>
+
+                        <div class="highlight-box">
+                            <p><strong>Impact:</strong> VRPO improves LLaDA's performance across extensive benchmarks. Techniques 2 & 3 improve results without any additional cost.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Citation -->
+                <div class="citation-section">
+                    <h2 class="title is-3">Bibtex</h2>
+                    <div class="content">
+                        <p class="is-size-5">Please consider cite:</p>
+
+                        <div class="highlight-box">
+                            <p class="is-size-5">
+                                <pre><code>@article{zhu2025llada,
+    title={LLaDA 1.5: Variance-Reduced Preference Optimization for Large Language Diffusion Models},
+    author={Zhu, Fengqi and Wang, Rongzhen and Nie, Shen and Zhang, Xiaolu and Wu, Chunwei and Hu, Jun and Zhou, Jun and Chen, Jianfei and Lin, Yankai and Wen, Ji-Rong and others},
+    journal={arXiv preprint arXiv:2505.19223},
+    year={2025}
+}</code></pre>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
